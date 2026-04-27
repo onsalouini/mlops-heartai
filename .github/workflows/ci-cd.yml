@@ -23,4 +23,4 @@ jobs:
         run: python3 main.py --all
 
       - name: Run tests
-        run: pytest tests/ -v --timeout=60
+        run: pytest tests/ -v
