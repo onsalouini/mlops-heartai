@@ -9,3 +9,5 @@ pytest-cov
 httpx
 mlflow
 pytest-timeout
+httpx==0.23.0
+anyio==3.6.2
