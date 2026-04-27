@@ -9,3 +9,4 @@ pytest-cov
 httpx
 mlflow
 pytest-timeout
+starlette==0.27.0
