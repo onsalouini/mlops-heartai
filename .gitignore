@@ -8,3 +8,6 @@ htmlcov/
 .coverage
 *.log
 .env
+*.tar.gz
+*.pkl
+prenom_nom_classe_mlops*
