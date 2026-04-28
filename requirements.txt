@@ -10,3 +10,5 @@ mlflow==2.3.0
 pytest
 pytest-cov
 pytest-timeout
+requests
+python-dotenv

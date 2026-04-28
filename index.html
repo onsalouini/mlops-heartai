@@ -2,477 +2,280 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>HeartAI Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>HeartAI — Dashboard MLOps</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#f0f4f8;color:#2c2c2c;min-height:100vh}
-.header{background:#185FA5;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px}
-.logo{color:#fff;font-size:20px;font-weight:700}
-.logo span{color:#85B7EB}
+body{font-family:Arial,sans-serif;background:#0f1117;color:#e0e0e0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a1f2e,#0d1117);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #21262d}
+.logo{font-size:22px;font-weight:700;color:#fff}.logo span{color:#58a6ff}
 .nav{display:flex;gap:4px}
-.nav-btn{background:transparent;border:none;color:rgba(255,255,255,0.7);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s}
-.nav-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
-.nav-btn.active{background:rgba(255,255,255,0.2);color:#fff}
-.status{display:flex;align-items:center;gap:6px;color:#B5D4F4;font-size:12px}
-.dot{width:8px;height:8px;border-radius:50%;background:#97C459;animation:pulse 2s infinite}
+.nav-btn{background:transparent;border:none;color:#8b949e;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s}
+.nav-btn:hover,.nav-btn.active{background:#21262d;color:#f0f6fc}
+.refresh{display:flex;align-items:center;gap:8px;font-size:12px;color:#8b949e}
+.dot{width:8px;height:8px;border-radius:50%;background:#3fb950;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.page{display:none;max-width:1200px;margin:0 auto;padding:1.5rem}
+.page{display:none;max-width:1400px;margin:0 auto;padding:1.5rem}
 .page.active{display:block}
-.api-bar{background:#fff;border-radius:10px;padding:0.75rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px;border:1px solid #e0e8f0;flex-wrap:wrap}
-.api-bar label{font-size:13px;color:#6b6b6b;white-space:nowrap}
-.api-bar input{flex:1;min-width:180px;padding:6px 12px;border:1px solid #d0d8e0;border-radius:7px;font-size:13px;font-family:monospace;color:#185FA5}
-.api-bar input:focus{outline:none;border-color:#378ADD}
-.api-badge{background:#E6F1FB;color:#185FA5;font-size:12px;padding:4px 12px;border-radius:20px;font-weight:600;white-space:nowrap}
-.btn-sm{padding:6px 14px;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;white-space:nowrap}
-.btn-sm.blue{background:#185FA5}.btn-sm.blue:hover{background:#0C447C}
-.btn-sm.green{background:#3B6D11}.btn-sm.green:hover{background:#27500A}
-.btn-sm.red{background:#E84855}.btn-sm.red:hover{background:#A32D2D}
-.btn-sm.gray{background:#888780}.btn-sm.gray:hover{background:#5F5E5A}
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem}
-.metric{background:#fff;border-radius:10px;padding:1rem 1.25rem;border:1px solid #e0e8f0;text-align:center}
-.metric-label{font-size:11px;color:#6b6b6b;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
-.metric-value{font-size:26px;font-weight:700}
-.mv-blue{color:#185FA5}.mv-red{color:#A32D2D}.mv-green{color:#3B6D11}.mv-gray{color:#5F5E5A}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
-.card{background:#fff;border-radius:12px;padding:1.5rem;border:1px solid #e0e8f0;margin-bottom:0}
-.card-title{font-size:14px;font-weight:700;color:#185FA5;margin-bottom:1.25rem;padding-bottom:8px;border-bottom:2px solid #E6F1FB;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.feature-list{display:flex;flex-direction:column;gap:10px}
-.feature-row{display:grid;grid-template-columns:130px 1fr 50px;align-items:center;gap:8px}
-.feature-row label{font-size:11px;color:#6b6b6b;font-weight:600}
-.feature-row input[type=range]{width:100%;accent-color:#185FA5;cursor:pointer}
-.feature-row .val{font-size:14px;font-weight:700;color:#185FA5;text-align:right}
-.fsec{margin-bottom:1rem}
-.fsec-title{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f0f4f8}
-.btn-predict{width:100%;margin-top:1rem;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s}
-.btn-predict:hover{background:#0C447C;transform:translateY(-1px)}
-.btn-predict:disabled{background:#B5D4F4;cursor:not-allowed;transform:none}
-.result-box{margin-top:1rem;padding:1.25rem;border-radius:10px;display:none;animation:fadeIn 0.3s}
-.result-box.show{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-.result-box.danger{background:#FCEBEB;border:1.5px solid #F09595}
-.result-box.success{background:#EAF3DE;border:1.5px solid #97C459}
-.result-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.result-icon{font-size:26px}
-.result-label{font-size:16px;font-weight:700}
-.result-label.danger{color:#A32D2D}
-.result-label.success{color:#3B6D11}
-.conf-bar{height:8px;background:#e0e8f0;border-radius:4px;overflow:hidden;margin:8px 0 4px}
-.conf-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
-.conf-fill.danger{background:#E24B4A}
-.conf-fill.success{background:#639922}
-.conf-text{font-size:12px;color:#6b6b6b}
-.htable{width:100%;border-collapse:collapse;font-size:13px}
-.htable th{text-align:left;padding:10px 12px;font-size:11px;color:#6b6b6b;border-bottom:2px solid #E6F1FB;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-.htable td{padding:10px 12px;border-bottom:1px solid #f0f4f8}
-.htable tr:hover td{background:#f7fafd}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.metric{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1.25rem;text-align:center}
+.metric-label{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.metric-value{font-size:28px;font-weight:700}
+.mv-blue{color:#58a6ff}.mv-green{color:#3fb950}.mv-red{color:#f85149}.mv-yellow{color:#d29922}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.card{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1.5rem}
+.card-title{font-size:14px;font-weight:600;color:#f0f6fc;margin-bottom:1.25rem;padding-bottom:10px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge.danger{background:#FCEBEB;color:#A32D2D}
-.badge.success{background:#EAF3DE;color:#3B6D11}
-.empty{text-align:center;padding:2.5rem;color:#6b6b6b;font-size:14px}
-.chart-wrap{position:relative}
-.no-cors{background:#FFF3CD;border:1px solid #FFC107;border-radius:8px;padding:1rem;font-size:13px;color:#856404;margin-bottom:1rem;display:none}
-.run-detail{background:#f7fafd;border:1px solid #e0e8f0;border-radius:10px;padding:1.25rem;margin-top:1rem;display:none;animation:fadeIn 0.3s}
-.run-detail.show{display:block}
-.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1rem}
-.dcard{background:#fff;border:1px solid #e0e8f0;border-radius:8px;padding:1rem;text-align:center}
-.dcard .dl{font-size:10px;color:#6b6b6b;text-transform:uppercase;margin-bottom:4px}
-.dcard .dv{font-size:18px;font-weight:700;color:#185FA5}
-.mpill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600;background:#E6F1FB;color:#185FA5}
-.rtag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#EAF3DE;color:#3B6D11}
-.rtag.running{background:#E6F1FB;color:#185FA5}
-.runs-table{width:100%;border-collapse:collapse;font-size:13px}
-.runs-table th{text-align:left;padding:10px 12px;font-size:11px;color:#6b6b6b;border-bottom:2px solid #E6F1FB;font-weight:700;text-transform:uppercase}
-.runs-table td{padding:10px 12px;border-bottom:1px solid #f0f4f8}
-.runs-table tr:hover td{background:#f7fafd;cursor:pointer}
-.run-name-cell{color:#185FA5;font-weight:600}
-@media(max-width:768px){
-  .metrics{grid-template-columns:1fr 1fr}
-  .grid2,.grid3{grid-template-columns:1fr}
-  .feature-row{grid-template-columns:100px 1fr 40px}
-}
+.badge-green{background:#0d4429;color:#3fb950}
+.badge-red{background:#490202;color:#f85149}
+.badge-yellow{background:#341a00;color:#d29922}
+.badge-gray{background:#21262d;color:#8b949e}
+.badge-blue{background:#0c2d6b;color:#58a6ff}
+.run-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #21262d}
+.run-row:last-child{border-bottom:none}
+.run-name{font-size:13px;color:#e6edf3;font-weight:500}
+.run-meta{font-size:11px;color:#8b949e;margin-top:3px}
+.run-metrics{display:flex;gap:12px;font-size:12px}
+.run-metric{color:#8b949e}
+.run-metric span{color:#58a6ff;font-weight:600}
+.gh-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #21262d;cursor:pointer;transition:background 0.2s}
+.gh-row:hover{background:#1c2128;margin:0 -1rem;padding:12px 1rem;border-radius:6px}
+.gh-row:last-child{border-bottom:none}
+.gh-info{flex:1}
+.gh-name{font-size:13px;color:#e6edf3;font-weight:500}
+.gh-meta{font-size:11px;color:#8b949e;margin-top:3px}
+.gh-commit{font-family:monospace;background:#21262d;padding:2px 6px;border-radius:4px;font-size:11px;color:#79c0ff}
+.chart-wrap{position:relative;height:220px}
+.empty{text-align:center;padding:2rem;color:#8b949e;font-size:13px}
+.status-bar{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.status-item{display:flex;align-items:center;gap:8px;font-size:13px;color:#8b949e}
+.status-dot{width:8px;height:8px;border-radius:50%}
+.s-green{background:#3fb950}.s-red{background:#f85149}.s-yellow{background:#d29922}.s-gray{background:#8b949e}
+a{color:#58a6ff;text-decoration:none}.a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
-
 <div class="header">
-  <div class="logo">Heart<span>AI</span></div>
+  <div class="logo">Heart<span>AI</span> MLOps</div>
   <div class="nav">
-    <button class="nav-btn active" onclick="showPage('predict',this)">Prédiction</button>
-    <button class="nav-btn" onclick="showPage('stats',this)">Statistiques</button>
-    <button class="nav-btn" onclick="showPage('mlflow',this)">MLflow</button>
+    <button class="nav-btn active" onclick="showPage('mlflow',this)">MLflow</button>
+    <button class="nav-btn" onclick="showPage('cicd',this)">CI/CD</button>
   </div>
-  <div class="status"><span class="dot"></span><span id="apiStatus">Vérification...</span></div>
+  <div class="refresh">
+    <span class="dot"></span>
+    <span id="lastUpdate">Chargement...</span>
+    <button onclick="loadAll()" style="background:#21262d;border:none;color:#8b949e;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px">↻ Refresh</button>
+  </div>
 </div>
 
-<!-- PAGE 1 — PRÉDICTION -->
-<div class="page active" id="page-predict">
-  <div class="api-bar">
-    <label>API :</label>
-    <input type="text" id="apiUrl" value="http://127.0.0.1:8000"/>
-    <button class="btn-sm blue" onclick="checkApi()">Tester</button>
-    <span class="api-badge">FastAPI</span>
-  </div>
-
+<!-- PAGE MLflow -->
+<div class="page active" id="page-mlflow">
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total</div><div class="metric-value mv-blue" id="totalCount">0</div></div>
-    <div class="metric"><div class="metric-label">Maladies</div><div class="metric-value mv-red" id="sickCount">0</div></div>
-    <div class="metric"><div class="metric-label">Sains</div><div class="metric-value mv-green" id="healthyCount">0</div></div>
-    <div class="metric"><div class="metric-label">Taux maladie</div><div class="metric-value mv-gray" id="rateValue">—</div></div>
+    <div class="metric"><div class="metric-label">Total Runs</div><div class="metric-value mv-blue" id="ml-total">—</div></div>
+    <div class="metric"><div class="metric-label">Meilleure Accuracy</div><div class="metric-value mv-green" id="ml-best">—</div></div>
+    <div class="metric"><div class="metric-label">Dernière Accuracy</div><div class="metric-value mv-blue" id="ml-last">—</div></div>
+    <div class="metric"><div class="metric-label">Expérience</div><div class="metric-value mv-yellow" style="font-size:13px" id="ml-exp">—</div></div>
   </div>
-
   <div class="grid2">
     <div class="card">
-      <div class="card-title">Données patient <span style="font-size:11px;font-weight:400;color:#6b6b6b">sliders interactifs</span></div>
-      <div class="fsec">
-        <div class="fsec-title">Général</div>
-        <div class="feature-list">
-          <div class="feature-row"><label>Age</label><input type="range" id="f0" min="20" max="90" value="63" oninput="upd(0)"/><span class="val" id="v0">63</span></div>
-          <div class="feature-row"><label>Sexe (0F/1M)</label><input type="range" id="f1" min="0" max="1" value="1" step="1" oninput="upd(1)"/><span class="val" id="v1">1</span></div>
-          <div class="feature-row"><label>Type douleur</label><input type="range" id="f2" min="0" max="3" value="3" step="1" oninput="upd(2)"/><span class="val" id="v2">3</span></div>
-        </div>
-      </div>
-      <div class="fsec">
-        <div class="fsec-title">Cardiaque</div>
-        <div class="feature-list">
-          <div class="feature-row"><label>Tension mmHg</label><input type="range" id="f3" min="80" max="220" value="145" oninput="upd(3)"/><span class="val" id="v3">145</span></div>
-          <div class="feature-row"><label>Cholestérol</label><input type="range" id="f4" min="100" max="600" value="233" oninput="upd(4)"/><span class="val" id="v4">233</span></div>
-          <div class="feature-row"><label>Glycémie &gt;120</label><input type="range" id="f5" min="0" max="1" value="1" step="1" oninput="upd(5)"/><span class="val" id="v5">1</span></div>
-          <div class="feature-row"><label>ECG repos</label><input type="range" id="f6" min="0" max="2" value="0" step="1" oninput="upd(6)"/><span class="val" id="v6">0</span></div>
-          <div class="feature-row"><label>FC maximale</label><input type="range" id="f7" min="60" max="220" value="150" oninput="upd(7)"/><span class="val" id="v7">150</span></div>
-        </div>
-      </div>
-      <div class="fsec">
-        <div class="fsec-title">Avancé</div>
-        <div class="feature-list">
-          <div class="feature-row"><label>Angine effort</label><input type="range" id="f8" min="0" max="1" value="0" step="1" oninput="upd(8)"/><span class="val" id="v8">0</span></div>
-          <div class="feature-row"><label>Dépression ST</label><input type="range" id="f9" min="0" max="6" value="2.3" step="0.1" oninput="upd(9)"/><span class="val" id="v9">2.3</span></div>
-          <div class="feature-row"><label>Pente ST</label><input type="range" id="f10" min="0" max="2" value="0" step="1" oninput="upd(10)"/><span class="val" id="v10">0</span></div>
-          <div class="feature-row"><label>Nb vaisseaux</label><input type="range" id="f11" min="0" max="4" value="0" step="1" oninput="upd(11)"/><span class="val" id="v11">0</span></div>
-          <div class="feature-row"><label>Thal</label><input type="range" id="f12" min="0" max="3" value="1" step="1" oninput="upd(12)"/><span class="val" id="v12">1</span></div>
-        </div>
-      </div>
-      <button class="btn-predict" id="predictBtn" onclick="predict()">Analyser le patient</button>
-      <div class="result-box" id="resultBox">
-        <div class="result-header">
-          <span class="result-icon" id="resultIcon"></span>
-          <span class="result-label" id="resultLabel"></span>
-        </div>
-        <div class="conf-bar"><div class="conf-fill" id="confFill" style="width:0%"></div></div>
-        <div class="conf-text" id="confText"></div>
-      </div>
+      <div class="card-title">Accuracy par run <span id="ml-badge" class="badge badge-gray">—</span></div>
+      <div class="chart-wrap"><canvas id="accChart" role="img" aria-label="Accuracy par run">Chargement...</canvas></div>
     </div>
-
-    <div style="display:flex;flex-direction:column;gap:1.25rem">
-      <div class="card">
-        <div class="card-title">Répartition</div>
-        <div class="chart-wrap" style="height:160px"><canvas id="pieChart" role="img" aria-label="Répartition résultats">Aucune donnée.</canvas></div>
-        <div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:#6b6b6b">
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#E24B4A;display:inline-block"></span>Maladie</span>
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#639922;display:inline-block"></span>Sain</span>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Évolution</div>
-        <div class="chart-wrap" style="height:140px"><canvas id="lineChart" role="img" aria-label="Historique prédictions">Aucune donnée.</canvas></div>
-      </div>
-      <div class="card" style="padding:1rem">
-        <div style="font-size:11px;font-weight:700;color:#6b6b6b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Profil patient</div>
-        <div style="font-size:13px;color:#2c2c2c;line-height:2">
-          Age : <strong id="pp0">63</strong> ans &nbsp;|&nbsp; Sexe : <strong id="pp1">M</strong><br>
-          Tension : <strong id="pp3">145</strong> mmHg &nbsp;|&nbsp; Chol. : <strong id="pp4">233</strong><br>
-          FC max : <strong id="pp7">150</strong> bpm
-        </div>
-      </div>
+    <div class="card">
+      <div class="card-title">Métriques comparées</div>
+      <div class="chart-wrap"><canvas id="metricsChart" role="img" aria-label="Métriques comparées">Chargement...</canvas></div>
     </div>
   </div>
-
   <div class="card">
-    <div class="card-title">
-      Historique (10 dernières)
-      <div style="display:flex;gap:8px">
-        <button class="btn-sm green" onclick="exportCSV()">Exporter CSV</button>
-        <button class="btn-sm gray" onclick="clearHistory()">Effacer</button>
-      </div>
-    </div>
-    <div id="historyContainer"><div class="empty">Aucune prédiction. Bougez les sliders et cliquez sur Analyser.</div></div>
+    <div class="card-title">Historique des runs MLflow</div>
+    <div id="runsContainer"><div class="empty">Chargement des runs...</div></div>
   </div>
 </div>
 
-<!-- PAGE 2 — STATISTIQUES -->
-<div class="page" id="page-stats">
-  <div class="grid3">
-    <div class="metric"><div class="metric-label">Accuracy modèle</div><div class="metric-value mv-blue">85.2%</div></div>
-    <div class="metric"><div class="metric-label">F1-Score</div><div class="metric-value mv-green">85.3%</div></div>
-    <div class="metric"><div class="metric-label">AUC-ROC</div><div class="metric-value mv-blue">89.9%</div></div>
+<!-- PAGE CI/CD -->
+<div class="page" id="page-cicd">
+  <div class="status-bar" id="statusBar">
+    <div class="status-item"><span class="status-dot s-gray"></span>Chargement...</div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Dernier statut</div><div class="metric-value mv-blue" id="gh-status">—</div></div>
+    <div class="metric"><div class="metric-label">Total runs</div><div class="metric-value mv-blue" id="gh-total">—</div></div>
+    <div class="metric"><div class="metric-label">Succès</div><div class="metric-value mv-green" id="gh-success">—</div></div>
+    <div class="metric"><div class="metric-label">Échecs</div><div class="metric-value mv-red" id="gh-fails">—</div></div>
   </div>
   <div class="grid2">
     <div class="card">
-      <div class="card-title">Distribution session</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="statsBar" role="img" aria-label="Distribution prédictions">Aucune donnée.</canvas></div>
+      <div class="card-title">Taux de succès CI/CD</div>
+      <div class="chart-wrap"><canvas id="ciChart" role="img" aria-label="Taux succès CI/CD">Chargement...</canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">Confiance moyenne par résultat</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="confBar" role="img" aria-label="Confiance moyenne">Aucune donnée.</canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Performances du modèle</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="radarChart" role="img" aria-label="Performances modèle">Aucune donnée.</canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Évolution de la confiance</div>
-      <div class="chart-wrap" style="height:220px"><canvas id="confLine" role="img" aria-label="Évolution confiance">Aucune donnée.</canvas></div>
+      <div class="card-title">Durée des runs (secondes)</div>
+      <div class="chart-wrap"><canvas id="durationChart" role="img" aria-label="Durée runs">Chargement...</canvas></div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:1.25rem">
-    <div class="card-title">Valeurs moyennes des features (normalisées %)</div>
-    <div class="chart-wrap" style="height:240px"><canvas id="featuresBar" role="img" aria-label="Analyse features">Aucune donnée.</canvas></div>
-  </div>
-</div>
-
-<!-- PAGE 3 — MLFLOW -->
-<div class="page" id="page-mlflow">
-  <div class="api-bar">
-    <label>MLflow :</label>
-    <input type="text" id="mlflowUrl" value="http://127.0.0.1:5000" style="color:#E84855"/>
-    <button class="btn-sm red" onclick="loadMLflow()">Charger les runs</button>
-    <button class="btn-sm blue" onclick="openMLflowUI()">Ouvrir UI</button>
-  </div>
-  <div class="no-cors" id="corsMsg">
-    MLflow ne supporte pas CORS par défaut — les données affichées sont simulées depuis vos runs locaux.
-    Cliquez sur <strong>Ouvrir UI</strong> pour accéder à l'interface MLflow complète.
-  </div>
-  <div class="metrics">
-    <div class="metric"><div class="metric-label">Total runs</div><div class="metric-value mv-blue" id="ml-total">—</div></div>
-    <div class="metric"><div class="metric-label">Meilleure accuracy</div><div class="metric-value mv-green" id="ml-best">—</div></div>
-    <div class="metric"><div class="metric-label">Dernière accuracy</div><div class="metric-value mv-blue" id="ml-last">—</div></div>
-    <div class="metric"><div class="metric-label">Expérience</div><div class="metric-value mv-gray" style="font-size:13px" id="ml-exp">—</div></div>
-  </div>
-  <div class="card" style="margin-bottom:1.25rem">
-    <div class="card-title">Runs — heart_disease_experiment <button class="btn-sm blue" onclick="loadMLflow()">Actualiser</button></div>
-    <div id="runsContainer"><div class="empty">Cliquez sur "Charger les runs".</div></div>
-  </div>
-  <div class="run-detail" id="runDetail">
-    <div style="font-size:14px;font-weight:700;color:#185FA5;margin-bottom:2px" id="detailTitle"></div>
-    <div style="font-size:12px;color:#6b6b6b;margin-bottom:1rem" id="detailTime"></div>
-    <div class="detail-grid" id="detailGrid"></div>
-  </div>
-  <div class="card" style="margin-top:1.25rem">
-    <div class="card-title">Comparaison accuracy par run</div>
-    <div class="chart-wrap" style="height:240px"><canvas id="runsChart" role="img" aria-label="Comparaison runs">Chargez les runs.</canvas></div>
+  <div class="card">
+    <div class="card-title">Derniers runs GitHub Actions <a href="https://github.com/onsalouini/mlops-heartai/actions" target="_blank" style="font-size:12px;font-weight:400">Voir sur GitHub →</a></div>
+    <div id="ghContainer"><div class="empty">Chargement...</div></div>
   </div>
 </div>
 
 <script>
-let history=[], mlflowRuns=[];
-let pieChart,lineChart,statsBar,confBar,radarChart,confLine,featuresBar,runsChart;
+let accChart, metricsChart, ciChart, durationChart;
 
-function showPage(name,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if(name==='stats') updateStatsCharts();
 }
 
-function upd(i){
-  const v=document.getElementById('f'+i).value;
-  document.getElementById('v'+i).textContent=v;
-  if([0,1,3,4,7].includes(i)){
-    const map={0:'pp0',1:'pp1',3:'pp3',4:'pp4',7:'pp7'};
-    if(map[i]) document.getElementById(map[i]).textContent = i===1?(v=='1'?'M':'F'):v;
-  }
-}
+function initCharts() {
+  const dark = { color: '#8b949e', grid: '#21262d' };
+  const opts = (yLabel) => ({
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: dark.color, font: { size: 10 } }, grid: { color: dark.grid } },
+      y: { ticks: { color: dark.color, font: { size: 10 }, callback: v => yLabel === '%' ? (v*100).toFixed(0)+'%' : v }, grid: { color: dark.grid }, beginAtZero: false }
+    }
+  });
 
-function initCharts(){
-  pieChart=new Chart(document.getElementById('pieChart'),{
-    type:'doughnut',data:{labels:['Maladie','Sain'],datasets:[{data:[0,0],backgroundColor:['#E24B4A','#639922'],borderWidth:3,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}
+  accChart = new Chart(document.getElementById('accChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Accuracy', data: [], backgroundColor: '#1f6feb', borderRadius: 4 }] },
+    options: { ...opts('%'), scales: { ...opts('%').scales, y: { ...opts('%').scales.y, min: 0.5, max: 1.0 } } }
   });
-  lineChart=new Chart(document.getElementById('lineChart'),{
-    type:'line',
-    data:{labels:[],datasets:[{data:[],borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:'#185FA5',pointBorderColor:'#fff',pointBorderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:-0.3,max:1.3,ticks:{callback:v=>v===1?'Malade':v===0?'Sain':'',font:{size:10}},grid:{color:'rgba(0,0,0,0.05)'}},x:{ticks:{font:{size:10},maxRotation:0},grid:{display:false}}},plugins:{legend:{display:false}}}
-  });
-  statsBar=new Chart(document.getElementById('statsBar'),{
-    type:'bar',data:{labels:['Maladie','Sain'],datasets:[{data:[0,0],backgroundColor:['#E24B4A','#639922'],borderRadius:6,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
-  });
-  confBar=new Chart(document.getElementById('confBar'),{
-    type:'bar',data:{labels:['Maladie','Sain'],datasets:[{data:[0,0],backgroundColor:['rgba(226,75,74,0.7)','rgba(99,153,34,0.7)'],borderRadius:6,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}
-  });
-  radarChart=new Chart(document.getElementById('radarChart'),{
-    type:'radar',
-    data:{labels:['Accuracy','F1-Score','AUC-ROC','Précision','Rappel'],datasets:[{label:'Modèle',data:[85.2,85.3,89.9,87.1,83.6],borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.15)',pointBackgroundColor:'#185FA5',pointRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:70,max:100,ticks:{font:{size:10}}}},plugins:{legend:{display:false}}}
-  });
-  confLine=new Chart(document.getElementById('confLine'),{
-    type:'line',data:{labels:[],datasets:[{data:[],borderColor:'#E84855',backgroundColor:'rgba(232,72,85,0.08)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#E84855',pointBorderColor:'#fff',pointBorderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}},x:{ticks:{font:{size:10}}}},plugins:{legend:{display:false}}}
-  });
-  featuresBar=new Chart(document.getElementById('featuresBar'),{
-    type:'bar',
-    data:{labels:['Age','Sexe','Douleur','Tension','Chol','Glycémie','ECG','FC max','Angine','ST dep','Pente','Vaisseaux','Thal'],datasets:[
-      {label:'Malade (moy%)',data:[],backgroundColor:'rgba(226,75,74,0.7)',borderRadius:4},
-      {label:'Sain (moy%)',data:[],backgroundColor:'rgba(99,153,34,0.7)',borderRadius:4}
+
+  metricsChart = new Chart(document.getElementById('metricsChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [
+      { label: 'Accuracy', data: [], borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.1)', fill: true, tension: 0.4, pointRadius: 4 },
+      { label: 'F1-Score', data: [], borderColor: '#3fb950', backgroundColor: 'rgba(63,185,80,0.1)', fill: true, tension: 0.4, pointRadius: 4 },
+      { label: 'AUC-ROC', data: [], borderColor: '#d29922', backgroundColor: 'rgba(210,153,34,0.1)', fill: true, tension: 0.4, pointRadius: 4 }
     ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'}},x:{ticks:{font:{size:10}}}}}
+    options: opts('%')
   });
-  runsChart=new Chart(document.getElementById('runsChart'),{
-    type:'bar',data:{labels:[],datasets:[{label:'Accuracy',data:[],backgroundColor:'#378ADD',borderRadius:6,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0.5,max:1,ticks:{callback:v=>(v*100).toFixed(0)+'%'}}}}
+
+  ciChart = new Chart(document.getElementById('ciChart'), {
+    type: 'doughnut',
+    data: { labels: ['Succès', 'Échecs', 'En cours'], datasets: [{ data: [0,0,0], backgroundColor: ['#3fb950','#f85149','#d29922'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } }, cutout: '65%' }
+  });
+
+  durationChart = new Chart(document.getElementById('durationChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Durée (s)', data: [], backgroundColor: '#388bfd', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8b949e' } } }, scales: { x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } }, y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' }, beginAtZero: true } } }
   });
 }
 
-function updateAll(){
-  const sick=history.filter(h=>h.pred===1).length;
-  const healthy=history.filter(h=>h.pred===0).length;
-  document.getElementById('totalCount').textContent=history.length;
-  document.getElementById('sickCount').textContent=sick;
-  document.getElementById('healthyCount').textContent=healthy;
-  const rEl=document.getElementById('rateValue');
-  if(history.length){const p=Math.round(sick/history.length*100);rEl.textContent=p+'%';rEl.className='metric-value '+(p>50?'mv-red':'mv-green');}
-  else{rEl.textContent='—';rEl.className='metric-value mv-gray';}
-  pieChart.data.datasets[0].data=[sick,healthy];pieChart.update();
-  const last=history.slice(-10);
-  lineChart.data.labels=last.map((_,i)=>'#'+(history.length-last.length+i+1));
-  lineChart.data.datasets[0].data=last.map(h=>h.pred);
-  lineChart.data.datasets[0].pointBackgroundColor=last.map(h=>h.pred===1?'#E24B4A':'#639922');
-  lineChart.update();
-  if(!history.length){document.getElementById('historyContainer').innerHTML='<div class="empty">Aucune prédiction.</div>';return;}
-  const rows=history.slice().reverse().slice(0,10).map((h,i)=>`<tr><td style="color:#6b6b6b">#${history.length-i}</td><td>${h.time}</td><td>Age <b>${h.age}</b> | Tension <b>${h.tension}</b> | Chol. <b>${h.chol}</b></td><td><span class="badge ${h.pred===1?'danger':'success'}">${h.label}</span></td><td style="color:#6b6b6b">${h.conf}%</td></tr>`).join('');
-  document.getElementById('historyContainer').innerHTML=`<table class="htable"><thead><tr><th>#</th><th>Heure</th><th>Patient</th><th>Résultat</th><th>Confiance</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
+async function loadMLflow() {
+  try {
+    const r = await fetch('/api/metrics');
+    const d = await r.json();
+    if (!d.runs || !d.runs.length) {
+      document.getElementById('runsContainer').innerHTML = '<div class="empty">Aucun run MLflow trouvé. Lance python3 main.py --all</div>';
+      return;
+    }
+    document.getElementById('ml-total').textContent = d.total;
+    document.getElementById('ml-best').textContent = (d.best_accuracy * 100).toFixed(1) + '%';
+    document.getElementById('ml-last').textContent = d.runs[0]?.accuracy ? (d.runs[0].accuracy * 100).toFixed(1) + '%' : '—';
+    document.getElementById('ml-exp').textContent = 'heart_disease';
+    const best = d.best_accuracy;
+    const badge = document.getElementById('ml-badge');
+    if (best >= 0.85) { badge.textContent = 'Excellent'; badge.className = 'badge badge-green'; }
+    else if (best >= 0.75) { badge.textContent = 'Bon'; badge.className = 'badge badge-yellow'; }
+    else { badge.textContent = 'À améliorer'; badge.className = 'badge badge-red'; }
 
-function updateStatsCharts(){
-  const sick=history.filter(h=>h.pred===1);
-  const healthy=history.filter(h=>h.pred===0);
-  statsBar.data.datasets[0].data=[sick.length,healthy.length];statsBar.update();
-  const as=sick.length?Math.round(sick.reduce((a,h)=>a+h.conf,0)/sick.length):0;
-  const ah=healthy.length?Math.round(healthy.reduce((a,h)=>a+h.conf,0)/healthy.length):0;
-  confBar.data.datasets[0].data=[as,ah];confBar.update();
-  confLine.data.labels=history.map((_,i)=>'#'+(i+1));
-  confLine.data.datasets[0].data=history.map(h=>h.conf);confLine.update();
-  const maxV=[90,1,3,220,600,1,2,220,1,6,2,4,3];
-  const avgF=(arr,fi)=>arr.length?arr.reduce((a,h)=>a+(h.features?.[fi]||0),0)/arr.length:0;
-  featuresBar.data.datasets[0].data=maxV.map((m,i)=>+(avgF(sick,i)/m*100).toFixed(1));
-  featuresBar.data.datasets[1].data=maxV.map((m,i)=>+(avgF(healthy,i)/m*100).toFixed(1));
-  featuresBar.update();
-}
+    const labels = d.runs.map(r => r.run_name?.split('-').slice(0,2).join('-') || r.run_id);
+    accChart.data.labels = labels;
+    accChart.data.datasets[0].data = d.runs.map(r => r.accuracy);
+    accChart.update();
 
-async function checkApi(){
-  const url=document.getElementById('apiUrl').value.trim();
-  const el=document.getElementById('apiStatus');const dot=document.querySelector('.dot');
-  try{const r=await fetch(url+'/health',{signal:AbortSignal.timeout(3000)});
-    if(r.ok){el.textContent='API connectée ✓';dot.style.background='#97C459';}
-    else{el.textContent='Erreur '+r.status;dot.style.background='#E24B4A';}}
-  catch{el.textContent='Non joignable';dot.style.background='#E24B4A';}
-}
+    const rev = [...d.runs].reverse();
+    metricsChart.data.labels = rev.map(r => r.start_time);
+    metricsChart.data.datasets[0].data = rev.map(r => r.accuracy);
+    metricsChart.data.datasets[1].data = rev.map(r => r.f1_score);
+    metricsChart.data.datasets[2].data = rev.map(r => r.auc_roc);
+    metricsChart.update();
 
-async function predict(){
-  const btn=document.getElementById('predictBtn');
-  const box=document.getElementById('resultBox');
-  const apiUrl=document.getElementById('apiUrl').value.trim();
-  const features=Array.from({length:13},(_,i)=>parseFloat(document.getElementById('f'+i).value)||0);
-  btn.disabled=true;btn.textContent='Analyse en cours...';box.className='result-box';
-  try{
-    const res=await fetch(apiUrl+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({features})});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const data=await res.json();
-    const pred=data.prediction;
-    const label=data.label||(pred===1?'Maladie cardiaque':'Pas de maladie');
-    const conf=data.confidence?Math.round(data.confidence*100):Math.round(65+Math.random()*25);
-    const cls=pred===1?'danger':'success';
-    document.getElementById('resultIcon').textContent=pred===1?'⚠️':'✅';
-    document.getElementById('resultLabel').textContent=label;
-    document.getElementById('resultLabel').className='result-label '+cls;
-    document.getElementById('confFill').style.width=conf+'%';
-    document.getElementById('confFill').className='conf-fill '+cls;
-    document.getElementById('confText').textContent='Confiance du modèle : '+conf+'%';
-    box.className='result-box show '+cls;
-    const now=new Date();
-    history.push({pred,label,conf,features,age:features[0],tension:features[3],chol:features[4],time:now.getHours()+'h'+String(now.getMinutes()).padStart(2,'0')});
-    updateAll();
-  }catch(e){
-    document.getElementById('resultIcon').textContent='❌';
-    document.getElementById('resultLabel').textContent='Erreur de connexion';
-    document.getElementById('resultLabel').className='result-label danger';
-    document.getElementById('confText').textContent="Vérifiez que l'API tourne sur "+apiUrl;
-    box.className='result-box show danger';
+    const rows = d.runs.map((r, i) => `
+      <div class="run-row">
+        <div>
+          <div class="run-name">${r.run_name || r.run_id}</div>
+          <div class="run-meta">${r.start_time} — <span class="badge ${r.status==='FINISHED'?'badge-green':'badge-yellow'}">${r.status}</span></div>
+        </div>
+        <div class="run-metrics">
+          <div class="run-metric">Accuracy <span>${r.accuracy?(r.accuracy*100).toFixed(1)+'%':'—'}</span></div>
+          <div class="run-metric">F1 <span>${r.f1_score?(r.f1_score*100).toFixed(1)+'%':'—'}</span></div>
+          <div class="run-metric">AUC <span>${r.auc_roc?(r.auc_roc*100).toFixed(1)+'%':'—'}</span></div>
+        </div>
+      </div>`).join('');
+    document.getElementById('runsContainer').innerHTML = rows;
+  } catch(e) {
+    document.getElementById('runsContainer').innerHTML = '<div class="empty">Erreur de connexion à l\'API. Lance uvicorn app:app --reload</div>';
   }
-  btn.disabled=false;btn.textContent='Analyser le patient';
 }
 
-function exportCSV(){
-  if(!history.length){alert('Aucune donnée.');return;}
-  const h='N°,Heure,Age,Tension,Cholesterol,FC max,Prediction,Label,Confiance\n';
-  const r=history.map((h,i)=>`${i+1},${h.time},${h.age},${h.tension},${h.chol},${h.features[7]},${h.pred},"${h.label}",${h.conf}%`).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([h+r],{type:'text/csv'}));a.download='heartai.csv';a.click();
+async function loadGithub() {
+  try {
+    const r = await fetch('/api/github');
+    const d = await r.json();
+
+    if (d.status === 'no_token') {
+      document.getElementById('ghContainer').innerHTML = '<div class="empty">Token GitHub non configuré dans .env</div>';
+      document.getElementById('statusBar').innerHTML = '<div class="status-item"><span class="status-dot s-yellow"></span>Token GitHub manquant — ajoute GITHUB_TOKEN dans .env</div>';
+      return;
+    }
+
+    const runs = d.runs || [];
+    const success = runs.filter(r => r.conclusion === 'success').length;
+    const fails   = runs.filter(r => r.conclusion === 'failure').length;
+    const inprog  = runs.filter(r => r.status === 'in_progress').length;
+
+    const lastConclusion = d.status;
+    document.getElementById('gh-status').textContent  = lastConclusion === 'success' ? '✅ OK' : lastConclusion === 'failure' ? '❌ KO' : '🟡 En cours';
+    document.getElementById('gh-status').className    = 'metric-value ' + (lastConclusion==='success'?'mv-green':lastConclusion==='failure'?'mv-red':'mv-yellow');
+    document.getElementById('gh-total').textContent   = runs.length;
+    document.getElementById('gh-success').textContent = success;
+    document.getElementById('gh-fails').textContent   = fails;
+
+    const statusColor = lastConclusion === 'success' ? 's-green' : lastConclusion === 'failure' ? 's-red' : 's-yellow';
+    document.getElementById('statusBar').innerHTML = `
+      <div class="status-item"><span class="status-dot ${statusColor}"></span>Dernier run : ${lastConclusion || 'en cours'}</div>
+      <div class="status-item"><span class="status-dot s-green"></span>${success} succès</div>
+      <div class="status-item"><span class="status-dot s-red"></span>${fails} échecs</div>
+      <a href="${d.repo_url}/actions" target="_blank" style="margin-left:auto;font-size:12px;color:#58a6ff">Voir GitHub Actions →</a>`;
+
+    ciChart.data.datasets[0].data = [success, fails, inprog];
+    ciChart.update();
+
+    const ghRows = runs.map(r => {
+      const cls = r.conclusion==='success'?'badge-green':r.conclusion==='failure'?'badge-red':r.status==='in_progress'?'badge-yellow':'badge-gray';
+      const label = r.conclusion || r.status;
+      return `<div class="gh-row" onclick="window.open('${r.url}','_blank')">
+        <div class="gh-info">
+          <div class="gh-name">${r.name}</div>
+          <div class="gh-meta">${r.created_at} — branche <strong>${r.branch}</strong> — commit <span class="gh-commit">${r.commit}</span></div>
+        </div>
+        <span class="badge ${cls}">${label}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('ghContainer').innerHTML = ghRows || '<div class="empty">Aucun run trouvé</div>';
+  } catch(e) {
+    document.getElementById('ghContainer').innerHTML = '<div class="empty">Erreur : ' + e.message + '</div>';
+  }
 }
 
-function clearHistory(){if(history.length&&confirm('Effacer ?')){history=[];updateAll();}}
-
-function openMLflowUI(){window.open(document.getElementById('mlflowUrl').value,'_blank');}
-
-async function loadMLflow(){
-  const url=document.getElementById('mlflowUrl').value.trim();
-  document.getElementById('corsMsg').style.display='none';
-  try{
-    const r=await fetch(url+'/api/2.0/mlflow/runs/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({experiment_ids:['0','1'],max_results:20}),signal:AbortSignal.timeout(3000)});
-    if(r.ok){const d=await r.json();mlflowRuns=d.runs||[];renderRuns();return;}
-  }catch{}
-  document.getElementById('corsMsg').style.display='block';
-  mlflowRuns=[
-    {info:{run_name:'delightful-grub-670',status:'FINISHED'},data:{metrics:[{key:'accuracy',value:0.8525},{key:'f1_score',value:0.8525},{key:'auc_roc',value:0.8987}],params:[{key:'hidden_layer_sizes',value:'(64, 32)'},{key:'max_iter',value:'500'},{key:'algorithm',value:'MLPClassifier'}]}},
-    {info:{run_name:'fun-dove-427',status:'FINISHED'},data:{metrics:[{key:'accuracy',value:0.8361},{key:'f1_score',value:0.8340},{key:'auc_roc',value:0.8812}],params:[{key:'hidden_layer_sizes',value:'(128, 64)'},{key:'max_iter',value:'500'},{key:'algorithm',value:'MLPClassifier'}]}},
-    {info:{run_name:'efficient-skink-132',status:'FINISHED'},data:{metrics:[{key:'accuracy',value:0.8197},{key:'f1_score',value:0.8190},{key:'auc_roc',value:0.8654}],params:[{key:'hidden_layer_sizes',value:'(32, 16)'},{key:'max_iter',value:'300'},{key:'algorithm',value:'MLPClassifier'}]}},
-    {info:{run_name:'bittersweet-fawn-977',status:'FINISHED'},data:{metrics:[{key:'accuracy',value:0.8033},{key:'f1_score',value:0.8010},{key:'auc_roc',value:0.8501}],params:[{key:'hidden_layer_sizes',value:'(64, 32)'},{key:'max_iter',value:'200'},{key:'algorithm',value:'MLPClassifier'}]}},
-    {info:{run_name:'serious-kit-644',status:'FINISHED'},data:{metrics:[{key:'accuracy',value:0.7869},{key:'f1_score',value:0.7850},{key:'auc_roc',value:0.8320}],params:[{key:'hidden_layer_sizes',value:'(16, 8)'},{key:'max_iter',value:'500'},{key:'algorithm',value:'MLPClassifier'}]}},
-    {info:{run_name:'stately-crow-28',status:'FINISHED'},data:{metrics:[{key:'accuracy',value:0.7705},{key:'f1_score',value:0.7690},{key:'auc_roc',value:0.8105}],params:[{key:'hidden_layer_sizes',value:'(8,)'},{key:'max_iter',value:'100'},{key:'algorithm',value:'MLPClassifier'}]}},
-  ];
-  renderRuns();
+async function loadAll() {
+  await Promise.all([loadMLflow(), loadGithub()]);
+  document.getElementById('lastUpdate').textContent = 'Mis à jour : ' + new Date().toLocaleTimeString();
 }
 
-function gm(run,key){return run.data?.metrics?.find(m=>m.key===key)?.value||0;}
-
-function renderRuns(){
-  if(!mlflowRuns.length){document.getElementById('runsContainer').innerHTML='<div class="empty">Aucun run.</div>';return;}
-  const best=Math.max(...mlflowRuns.map(r=>gm(r,'accuracy')));
-  document.getElementById('ml-total').textContent=mlflowRuns.length;
-  document.getElementById('ml-best').textContent=(best*100).toFixed(1)+'%';
-  document.getElementById('ml-last').textContent=(gm(mlflowRuns[0],'accuracy')*100).toFixed(1)+'%';
-  document.getElementById('ml-exp').textContent='heart_disease_experiment';
-  const rows=mlflowRuns.map((r,i)=>{
-    const acc=gm(r,'accuracy'),f1=gm(r,'f1_score'),auc=gm(r,'auc_roc');
-    const name=r.info?.run_name||'run-'+i;
-    return `<tr onclick="showRunDetail(${i})"><td class="run-name-cell">${name}</td><td><span class="rtag">FINISHED</span></td><td><span class="mpill">${(acc*100).toFixed(1)}%</span></td><td>${(f1*100).toFixed(1)}%</td><td>${(auc*100).toFixed(1)}%</td></tr>`;
-  }).join('');
-  document.getElementById('runsContainer').innerHTML=`<table class="runs-table"><thead><tr><th>Run</th><th>Statut</th><th>Accuracy</th><th>F1</th><th>AUC-ROC</th></tr></thead><tbody>${rows}</tbody></table>`;
-  runsChart.data.labels=mlflowRuns.map(r=>r.info?.run_name?.split('-').slice(0,2).join('-')||'run');
-  runsChart.data.datasets[0].data=mlflowRuns.map(r=>gm(r,'accuracy'));
-  runsChart.data.datasets[0].backgroundColor=mlflowRuns.map(r=>gm(r,'accuracy')===best?'#185FA5':'#85B7EB');
-  runsChart.update();
-}
-
-function showRunDetail(i){
-  const r=mlflowRuns[i];if(!r)return;
-  const acc=gm(r,'accuracy'),f1=gm(r,'f1_score'),auc=gm(r,'auc_roc');
-  const params=r.data?.params||[];
-  document.getElementById('detailTitle').textContent='Run : '+(r.info?.run_name||'—');
-  document.getElementById('detailTime').textContent='Cliquez sur "Ouvrir UI" pour voir les détails complets dans MLflow.';
-  document.getElementById('detailGrid').innerHTML=`
-    <div class="dcard"><div class="dl">Accuracy</div><div class="dv">${(acc*100).toFixed(2)}%</div></div>
-    <div class="dcard"><div class="dl">F1-Score</div><div class="dv">${(f1*100).toFixed(2)}%</div></div>
-    <div class="dcard"><div class="dl">AUC-ROC</div><div class="dv">${(auc*100).toFixed(2)}%</div></div>
-    ${params.map(p=>`<div class="dcard"><div class="dl">${p.key}</div><div class="dv" style="font-size:14px">${p.value}</div></div>`).join('')}`;
-  const d=document.getElementById('runDetail');d.className='run-detail show';
-  d.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-
-initCharts();checkApi();
+initCharts();
+loadAll();
+setInterval(loadAll, 30000);
 </script>
 </body>
 </html>
