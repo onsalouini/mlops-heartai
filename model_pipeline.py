@@ -48,20 +48,41 @@ def prepare_data(path=DATA_PATH):
     return X_train, X_test, y_train, y_test
 
 def train_model(X_train, y_train):
+    """Modèle optimisé via GridSearchCV le 2026-05-01
+    Scorer : 60% Recall + 40% AUC-ROC (priorité détection médicale)
+    Meilleurs params : hidden=(64, 32), alpha=0.0001, lr=0.001
+    """
     with mlflow.start_run():
         hidden, max_iter = (64, 32), 500
+        alpha            = 0.0001
+        lr_init          = 0.001
+
         mlflow.log_param("hidden_layer_sizes", str(hidden))
-        mlflow.log_param("max_iter", max_iter)
-        mlflow.log_param("algorithm", "MLPClassifier")
-        model = MLPClassifier(hidden_layer_sizes=hidden,
-                              max_iter=max_iter, random_state=42)
+        mlflow.log_param("max_iter",           max_iter)
+        mlflow.log_param("algorithm",          "MLPClassifier_Optimized")
+        mlflow.log_param("alpha",              alpha)
+        mlflow.log_param("learning_rate_init", lr_init)
+        mlflow.log_param("early_stopping",     True)
+
+        model = MLPClassifier(
+            hidden_layer_sizes=hidden,
+            activation='relu',
+            solver='adam',
+            alpha=alpha,
+            learning_rate_init=lr_init,
+            early_stopping=True,
+            validation_fraction=0.15,
+            max_iter=max_iter,
+            random_state=42
+        )
         model.fit(X_train, y_train)
-        print("Modele entraine avec succes.")
+        print("Modèle optimisé entraîné avec succès.")
         mlflow.sklearn.log_model(model, "model")
         send_es({"timestamp": datetime.now().isoformat(),
                  "event": "train_model",
                  "hidden_layer_sizes": str(hidden),
-                 "max_iter": max_iter})
+                 "alpha": alpha,
+                 "learning_rate_init": lr_init})
     return model
 
 def evaluate_model(model, X_test, y_test):

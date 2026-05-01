@@ -29,11 +29,12 @@ def health():
 @app.post("/predict")
 def predict(data: InputData):
     try:
-        arr  = np.array(data.features).reshape(1, -1)
-        arr  = scaler.transform(arr)
-        pred = int(model.predict(arr)[0])
+        arr   = np.array(data.features).reshape(1, -1)
+        arr   = scaler.transform(arr)
+        proba = model.predict_proba(arr)[0][1]
+        pred  = int(proba >= 0.65)
         label = "Maladie cardiaque" if pred == 1 else "Pas de maladie"
-        return {"prediction": pred, "label": label}
+        return {"prediction": pred, "label": label, "confidence": round(float(proba), 3)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
