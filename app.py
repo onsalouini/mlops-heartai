@@ -31,10 +31,19 @@ def predict(data: InputData):
     try:
         arr   = np.array(data.features).reshape(1, -1)
         arr   = scaler.transform(arr)
-        proba = model.predict_proba(arr)[0][1]
-        pred  = int(proba >= 0.65)
-        label = "Maladie cardiaque" if pred == 1 else "Pas de maladie"
-        return {"prediction": pred, "label": label, "confidence": round(float(proba), 3)}
+        pred  = int(model.predict(arr)[0])
+        proba = float(model.predict_proba(arr)[0][pred])
+
+        # Dans Heart Disease dataset :
+        # target=0 → Maladie cardiaque
+        # target=1 → Pas de maladie
+        label = "Pas de maladie" if pred == 1 else "Maladie cardiaque"
+
+        return {
+            "prediction": pred,
+            "label": label,
+            "confidence": round(proba, 3)
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -53,12 +62,12 @@ def get_metrics():
         runs_data = []
         for r in runs:
             runs_data.append({
-                "run_id":   r.info.run_id[:8],
-                "run_name": r.info.run_name,
-                "status":   r.info.status,
-                "accuracy": r.data.metrics.get("accuracy", 0),
-                "f1_score": r.data.metrics.get("f1_score", 0),
-                "auc_roc":  r.data.metrics.get("auc_roc", 0),
+                "run_id":     r.info.run_id[:8],
+                "run_name":   r.info.run_name,
+                "status":     r.info.status,
+                "accuracy":   r.data.metrics.get("accuracy", 0),
+                "f1_score":   r.data.metrics.get("f1_score", 0),
+                "auc_roc":    r.data.metrics.get("auc_roc", 0),
                 "start_time": datetime.fromtimestamp(
                     r.info.start_time/1000).strftime("%d/%m %H:%M")
             })
@@ -92,9 +101,9 @@ def get_github():
             })
         latest = runs[0] if runs else {}
         return {
-            "status":  latest.get("conclusion", "unknown"),
-            "runs":    runs,
-            "repo":    GITHUB_REPO,
+            "status":   latest.get("conclusion", "unknown"),
+            "runs":     runs,
+            "repo":     GITHUB_REPO,
             "repo_url": f"https://github.com/{GITHUB_REPO}"
         }
     except Exception as e:
@@ -103,3 +112,117 @@ def get_github():
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
     return FileResponse("index.html")
+
+import pandas as pd
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+
+DATA_PATH = "heart.csv"
+
+@app.get("/api/dataset/info")
+def dataset_info():
+    df = pd.read_csv(DATA_PATH)
+    return {
+        "total_rows":    len(df),
+        "sick":          int((df["target"]==0).sum()),
+        "healthy":       int((df["target"]==1).sum()),
+        "features":      list(df.columns),
+        "preview":       df.head(5).to_dict(orient="records")
+    }
+
+@app.post("/api/dataset/add")
+def add_row(data: InputData):
+    try:
+        df = pd.read_csv(DATA_PATH)
+        if len(data.features) != 14:
+            raise HTTPException(status_code=400, detail="14 valeurs requises (13 features + target)")
+        cols = list(df.columns)
+        new_row = dict(zip(cols, data.features))
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv(DATA_PATH, index=False)
+        return {"message": "Ligne ajoutée", "total_rows": len(df)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/dataset/delete/{index}")
+def delete_row(index: int):
+    try:
+        df = pd.read_csv(DATA_PATH)
+        if index < 0 or index >= len(df):
+            raise HTTPException(status_code=400, detail="Index invalide")
+        df = df.drop(index=index).reset_index(drop=True)
+        df.to_csv(DATA_PATH, index=False)
+        return {"message": f"Ligne {index} supprimée", "total_rows": len(df)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/dataset/retrain")
+def retrain_after_edit():
+    try:
+        from model_pipeline import prepare_data, train_model, evaluate_model, save_model
+        X_train, X_test, y_train, y_test = prepare_data(DATA_PATH)
+        model_new = train_model(X_train, y_train)
+        metrics   = evaluate_model(model_new, X_test, y_test)
+        save_model(model_new)
+        global model, scaler
+        model  = joblib.load("heart_nn_model.pkl")
+        scaler = joblib.load("scaler.pkl")
+        return {"message": "Modèle réentraîné", "metrics": metrics}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+import pandas as pd
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+
+DATA_PATH = "heart.csv"
+
+@app.get("/api/dataset/info")
+def dataset_info():
+    df = pd.read_csv(DATA_PATH)
+    return {
+        "total_rows":    len(df),
+        "sick":          int((df["target"]==0).sum()),
+        "healthy":       int((df["target"]==1).sum()),
+        "features":      list(df.columns),
+        "preview":       df.head(5).to_dict(orient="records")
+    }
+
+@app.post("/api/dataset/add")
+def add_row(data: InputData):
+    try:
+        df = pd.read_csv(DATA_PATH)
+        if len(data.features) != 14:
+            raise HTTPException(status_code=400, detail="14 valeurs requises (13 features + target)")
+        cols = list(df.columns)
+        new_row = dict(zip(cols, data.features))
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv(DATA_PATH, index=False)
+        return {"message": "Ligne ajoutée", "total_rows": len(df)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/dataset/delete/{index}")
+def delete_row(index: int):
+    try:
+        df = pd.read_csv(DATA_PATH)
+        if index < 0 or index >= len(df):
+            raise HTTPException(status_code=400, detail="Index invalide")
+        df = df.drop(index=index).reset_index(drop=True)
+        df.to_csv(DATA_PATH, index=False)
+        return {"message": f"Ligne {index} supprimée", "total_rows": len(df)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/dataset/retrain")
+def retrain_after_edit():
+    try:
+        from model_pipeline import prepare_data, train_model, evaluate_model, save_model
+        X_train, X_test, y_train, y_test = prepare_data(DATA_PATH)
+        model_new = train_model(X_train, y_train)
+        metrics   = evaluate_model(model_new, X_test, y_test)
+        save_model(model_new)
+        global model, scaler
+        model  = joblib.load("heart_nn_model.pkl")
+        scaler = joblib.load("scaler.pkl")
+        return {"message": "Modèle réentraîné", "metrics": metrics}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
